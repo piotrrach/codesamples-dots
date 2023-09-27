@@ -1,4 +1,6 @@
-﻿using Unity.Burst;
+﻿using System.Diagnostics;
+using System.Numerics;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -23,7 +25,7 @@ namespace CodeSamplesDOTS
             var world = state.WorldUnmanaged;
 
             //Get query for AgentHitCheckJob to iterate over it
-            var agentsQuery = SystemAPI.QueryBuilder().WithAspect<AgentLivesAspect>().Build();
+            var agentsQuery = SystemAPI.QueryBuilder().WithAspect<AgentLivesAspect>().WithAll<AgentAliveTag>().Build();
             var projectileEntities = projectileQuery.ToEntityArray(world.UpdateAllocator.ToAllocator);
 
             var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
@@ -84,12 +86,13 @@ namespace CodeSamplesDOTS
             [NativeDisableParallelForRestriction][ReadOnly] public NativeArray<Entity> projectilesEntities;
             internal EntityCommandBuffer.ParallelWriter ECB;
 
-            public void Execute([ChunkIndexInQuery] int chunkIndexInQuery, AgentLivesAspect agentLives)
+            public void Execute([ChunkIndexInQuery] int chunkIndexInQuery, AgentLivesAspect agentLives, AgentAliveTag _)
             {
                 for (int i = 0; i < projectilesPositions.Length; i++)
                 {
                     var distanceSQ = math.distancesq(agentLives.Position, projectilesPositions[i]);
-                    if (distanceSQ < 0.25f)
+                    
+                    if (distanceSQ < 0.2f)
                     {
                         ECB.DestroyEntity(chunkIndexInQuery, projectilesEntities[i]);
 
@@ -98,6 +101,7 @@ namespace CodeSamplesDOTS
                         if (agentLives.Lives <= 0)
                         {
                             ECB.DestroyEntity(chunkIndexInQuery, agentLives.Entity);
+                            break;
                         }
                         else
                         {

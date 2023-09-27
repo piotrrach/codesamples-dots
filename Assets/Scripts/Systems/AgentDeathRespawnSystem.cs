@@ -6,6 +6,7 @@ using Unity.Transforms;
 namespace CodeSamplesDOTS
 {
     [BurstCompile]
+    [UpdateAfter(typeof(ProjectileHitSystem))]
     public partial struct AgentDeathRespawnSystem : ISystem
     {
         [BurstCompile]
