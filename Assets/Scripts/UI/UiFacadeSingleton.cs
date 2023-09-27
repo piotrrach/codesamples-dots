@@ -5,21 +5,8 @@ namespace CodeSamplesDOTS
 {
     public class UiFacadeSingleton : MonoBehaviour
     {
-        //Akward singleton creation: We can't make this normal way in Awake
-        //as we want to use the Instance in OnCreate method within ECS Systems.
-        //OnCreate in systems is beeing called before Awakes or in a random order (at least I think so)
-        private static UiFacadeSingleton _instance;
-        public static UiFacadeSingleton Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = FindObjectOfType<UiFacadeSingleton>();
-                }
-                return _instance;
-            }
-        }
+        public static UiFacadeSingleton Instance { get; private set; }
+
 
         [SerializeField] private GameObject _gameOverWindow;
 
@@ -46,6 +33,17 @@ namespace CodeSamplesDOTS
         public void ShowGameOverWindow()
         {
             _gameOverWindow.SetActive(true);
+        }
+
+        private void Awake()
+        {
+            if (Instance != null)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
         }
     }
 }

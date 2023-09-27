@@ -7,7 +7,7 @@ namespace CodeSamplesDOTS
     [UpdateInGroup(typeof(InitializationSystemGroup), OrderFirst = true)]
     public partial class GameManageSystem : SystemBase
     {
-
+        private bool _isInitialized = false;
         private bool _isGameStarted;
         private int _updatesAfterGameStarted;
 
@@ -15,9 +15,8 @@ namespace CodeSamplesDOTS
         {
             RequireForUpdate<GameStateTag>();
 
+            _isInitialized = false;
             _isGameStarted = false;
-            UiFacadeSingleton.Instance.OnStartPressed += SetGameStarted;
-            UiFacadeSingleton.Instance.OnAgentQuantityChoosen += OnInitAgentQuantityChange;
         }
 
         protected override void OnDestroy()
@@ -37,16 +36,26 @@ namespace CodeSamplesDOTS
         {
             var gameStateEntity = SystemAPI.GetSingletonEntity<GameStateTag>();
 
-            if (_isGameStarted)
+            if (!_isInitialized)
             {
-                if(!SystemAPI.HasSingleton<GameStartedTag>())
-                {
-                    World.EntityManager.RemoveComponent<GameEndedTag>(gameStateEntity);
-                    World.EntityManager.AddComponent<GameStartedTag>(gameStateEntity);
-                };
-
-                _updatesAfterGameStarted++;
+                UiFacadeSingleton.Instance.OnStartPressed += SetGameStarted;
+                UiFacadeSingleton.Instance.OnAgentQuantityChoosen += OnInitAgentQuantityChange;
+                _isInitialized = true;
+                return;
             }
+
+            if (!_isGameStarted)
+            {
+                return;
+            }
+
+            if (!SystemAPI.HasSingleton<GameStartedTag>())
+            {
+                World.EntityManager.RemoveComponent<GameEndedTag>(gameStateEntity);
+                World.EntityManager.AddComponent<GameStartedTag>(gameStateEntity);
+            };
+
+            _updatesAfterGameStarted++;
 
             if (_updatesAfterGameStarted <= 2)
             {
